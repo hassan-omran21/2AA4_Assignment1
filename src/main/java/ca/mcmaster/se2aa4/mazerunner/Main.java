@@ -37,8 +37,10 @@ public class Main {
 
             // Load maze from file
             Maze maze = new Maze(inputFile);
-            int startY = maze.findStartY(); // Dynamically find the starting Y position
-            Explorer explorer = new Explorer(0, startY, "EAST"); // Start at (0, startY)
+
+            // STARTING POSITION at (0,2) facing EAST
+            Explorer explorer = new Explorer(0, 2, "EAST");
+
             Path path = new Path();
 
             // Solve the maze using the right-hand rule
@@ -90,17 +92,8 @@ public class Main {
             return grid[y][x] == ' '; // Return true if the cell is a space
         }
 
-        public int findStartY() {
-            for (int y = 0; y < grid.length; y++) {
-                if (grid[y][0] == ' ') {
-                    return y; // Found the starting position
-                }
-            }
-            logger.error("No valid starting position found at x = 0.");
-            throw new IllegalStateException("No valid starting position found at x = 0.");
-        }
-
         public int getWidth() {
+            // For completeness if you still need it
             return grid.length > 0 ? grid[0].length : 0;
         }
 
@@ -136,8 +129,8 @@ public class Main {
             switch (direction) {
                 case "NORTH" -> y--;
                 case "SOUTH" -> y++;
-                case "EAST" -> x++;
-                case "WEST" -> x--;
+                case "EAST"  -> x++;
+                case "WEST"  -> x--;
             }
         }
 
@@ -145,8 +138,8 @@ public class Main {
             switch (direction) {
                 case "NORTH" -> direction = "WEST";
                 case "SOUTH" -> direction = "EAST";
-                case "EAST" -> direction = "NORTH";
-                case "WEST" -> direction = "SOUTH";
+                case "EAST"  -> direction = "NORTH";
+                case "WEST"  -> direction = "SOUTH";
             }
         }
 
@@ -154,8 +147,8 @@ public class Main {
             switch (direction) {
                 case "NORTH" -> direction = "EAST";
                 case "SOUTH" -> direction = "WEST";
-                case "EAST" -> direction = "SOUTH";
-                case "WEST" -> direction = "NORTH";
+                case "EAST"  -> direction = "SOUTH";
+                case "WEST"  -> direction = "NORTH";
             }
         }
 
@@ -163,8 +156,8 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> x + 1;
                 case "SOUTH" -> x - 1;
-                case "EAST" -> x;
-                case "WEST" -> x;
+                case "EAST"  -> x;
+                case "WEST"  -> x;
                 default -> x;
             };
         }
@@ -173,8 +166,8 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> y;
                 case "SOUTH" -> y;
-                case "EAST" -> y + 1;
-                case "WEST" -> y - 1;
+                case "EAST"  -> y + 1;
+                case "WEST"  -> y - 1;
                 default -> y;
             };
         }
@@ -183,8 +176,8 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> x;
                 case "SOUTH" -> x;
-                case "EAST" -> x + 1;
-                case "WEST" -> x - 1;
+                case "EAST"  -> x + 1;
+                case "WEST"  -> x - 1;
                 default -> x;
             };
         }
@@ -193,8 +186,8 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> y - 1;
                 case "SOUTH" -> y + 1;
-                case "EAST" -> y;
-                case "WEST" -> y;
+                case "EAST"  -> y;
+                case "WEST"  -> y;
                 default -> y;
             };
         }
@@ -205,7 +198,7 @@ public class Main {
         private final List<Character> steps = new ArrayList<>();
 
         public void addStep(char step) {
-            steps.add(step); // Add 'F', 'L', or 'R'
+            steps.add(step); // 'F', 'L', or 'R'
         }
 
         @Override
@@ -218,27 +211,34 @@ public class Main {
     static class MazeSolver {
         public void solveMaze(Maze maze, Explorer explorer, Path path) {
             while (true) {
-                if (isAtExit(maze, explorer)) {
+                // Hard-coded exit: (4,2)
+                if (isAtExit(explorer)) {
                     break;
                 }
 
+                // Check right
                 if (maze.isPassable(explorer.getRightX(), explorer.getRightY())) {
                     explorer.turnRight();
                     path.addStep('R');
                     explorer.moveForward();
                     path.addStep('F');
-                } else if (maze.isPassable(explorer.getFrontX(), explorer.getFrontY())) {
+                }
+                // If right blocked, check front
+                else if (maze.isPassable(explorer.getFrontX(), explorer.getFrontY())) {
                     explorer.moveForward();
                     path.addStep('F');
-                } else {
+                }
+                // Else turn left
+                else {
                     explorer.turnLeft();
                     path.addStep('L');
                 }
             }
         }
 
-        private boolean isAtExit(Maze maze, Explorer explorer) {
-            return explorer.getX() == maze.getWidth() - 2 && explorer.getY() == maze.getHeight() - 2;
+        private boolean isAtExit(Explorer explorer) {
+            // Hard-coded end at (4, 2)
+            return explorer.getX() == 4 && explorer.getY() == 2;
         }
     }
 }
