@@ -1,53 +1,244 @@
 package ca.mcmaster.se2aa4.mazerunner;
 
+import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.cli.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
 
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) {
-        logger.info("Starting Maze Runner");
+        logger.info("Starting Maze Runner MVP");
 
+        // Define command-line options
         Options options = new Options();
-        options.addOption("i", true, "Input maze file");
+        options.addOption("i", "input", true, "Path to the maze input file");
 
         CommandLineParser parser = new DefaultParser();
+        CommandLine cmd;
+
         try {
-            CommandLine cmd = parser.parse(options, args);
+            cmd = parser.parse(options, args);
 
-            if (cmd.hasOption("i")) {
-                String mazeFile = cmd.getOptionValue("i");
-                logger.info("Reading the maze from file: {}", mazeFile);
-
-                try (BufferedReader reader = new BufferedReader(new FileReader(mazeFile))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        for (int idx = 0; idx < line.length(); idx++) {
-                            if (line.charAt(idx) == '#') {
-                                System.out.print("WALL ");
-                            } else if (line.charAt(idx) == ' ') {
-                                System.out.print("PASS ");
-                            }
-                        }
-                        System.out.println();
-                    }
-                }
-            } else {
-                logger.error("No input file provided. Use the -i flag to specify a maze file.");
+            // Ensure the -i flag is provided
+            if (!cmd.hasOption("i")) {
+                logger.error("Missing required option: -i <input_file>");
+                return;
             }
+
+            String inputFile = cmd.getOptionValue("i");
+
+            // Load maze from file
+            Maze maze = new Maze(inputFile);
+            int startY = maze.findStartY(); // Dynamically find the starting Y position
+            Explorer explorer = new Explorer(0, startY, "EAST"); // Start at (0, startY)
+            Path path = new Path();
+
+            // Solve the maze using the right-hand rule
+            MazeSolver solver = new MazeSolver();
+            solver.solveMaze(maze, explorer, path);
+
+            // Print the canonical path
+            logger.info("Canonical Path: {}", path.toString());
+            logger.info("End of Maze Runner MVP");
+
         } catch (ParseException e) {
-            logger.error("Failed to parse command-line arguments", e);
-        } catch (IOException e) {
-            logger.error("An error occurred while reading the maze file", e);
+            logger.error("Failed to parse command-line arguments: {}", e.getMessage());
+        }
+    }
+
+    // Maze class to load and represent the maze
+    static class Maze {
+        private char[][] grid;
+
+        public Maze(String fileName) {
+            if (!loadMaze(fileName)) {
+                logger.error("Maze file could not be loaded. Exiting...");
+                System.exit(1);
+            }
         }
 
-        logger.info("End of Maze Runner");
+        private boolean loadMaze(String fileName) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+                List<char[]> lines = new ArrayList<>();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    lines.add(line.toCharArray());
+                }
+                grid = lines.toArray(new char[0][]);
+                return true; // File loaded successfully
+            } catch (IOException e) {
+                logger.error("Failed to load maze: {}", e.getMessage());
+                return false; // File loading failed
+            }
+        }
+
+        public boolean isPassable(int x, int y) {
+            if (y < 0 || y >= grid.length) {
+                return false; // Out of vertical bounds
+            }
+            if (x < 0 || x >= grid[y].length) {
+                return false; // Out of horizontal bounds
+            }
+            return grid[y][x] == ' '; // Return true if the cell is a space
+        }
+
+        public int findStartY() {
+            for (int y = 0; y < grid.length; y++) {
+                if (grid[y][0] == ' ') {
+                    return y; // Found the starting position
+                }
+            }
+            logger.error("No valid starting position found at x = 0.");
+            throw new IllegalStateException("No valid starting position found at x = 0.");
+        }
+
+        public int getWidth() {
+            return grid.length > 0 ? grid[0].length : 0;
+        }
+
+        public int getHeight() {
+            return grid.length;
+        }
+    }
+
+    // Explorer class to manage movement
+    static class Explorer {
+        private int x, y;
+        private String direction;
+
+        public Explorer(int startX, int startY, String startDirection) {
+            this.x = startX;
+            this.y = startY;
+            this.direction = startDirection;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public String getDirection() {
+            return direction;
+        }
+
+        public void moveForward() {
+            switch (direction) {
+                case "NORTH" -> y--;
+                case "SOUTH" -> y++;
+                case "EAST" -> x++;
+                case "WEST" -> x--;
+            }
+        }
+
+        public void turnLeft() {
+            switch (direction) {
+                case "NORTH" -> direction = "WEST";
+                case "SOUTH" -> direction = "EAST";
+                case "EAST" -> direction = "NORTH";
+                case "WEST" -> direction = "SOUTH";
+            }
+        }
+
+        public void turnRight() {
+            switch (direction) {
+                case "NORTH" -> direction = "EAST";
+                case "SOUTH" -> direction = "WEST";
+                case "EAST" -> direction = "SOUTH";
+                case "WEST" -> direction = "NORTH";
+            }
+        }
+
+        public int getRightX() {
+            return switch (direction) {
+                case "NORTH" -> x + 1;
+                case "SOUTH" -> x - 1;
+                case "EAST" -> x;
+                case "WEST" -> x;
+                default -> x;
+            };
+        }
+
+        public int getRightY() {
+            return switch (direction) {
+                case "NORTH" -> y;
+                case "SOUTH" -> y;
+                case "EAST" -> y + 1;
+                case "WEST" -> y - 1;
+                default -> y;
+            };
+        }
+
+        public int getFrontX() {
+            return switch (direction) {
+                case "NORTH" -> x;
+                case "SOUTH" -> x;
+                case "EAST" -> x + 1;
+                case "WEST" -> x - 1;
+                default -> x;
+            };
+        }
+
+        public int getFrontY() {
+            return switch (direction) {
+                case "NORTH" -> y - 1;
+                case "SOUTH" -> y + 1;
+                case "EAST" -> y;
+                case "WEST" -> y;
+                default -> y;
+            };
+        }
+    }
+
+    // Path class to track steps
+    static class Path {
+        private final List<Character> steps = new ArrayList<>();
+
+        public void addStep(char step) {
+            steps.add(step); // Add 'F', 'L', or 'R'
+        }
+
+        @Override
+        public String toString() {
+            return String.join("", steps.stream().map(String::valueOf).toArray(String[]::new));
+        }
+    }
+
+    // MazeSolver class with right-hand rule
+    static class MazeSolver {
+        public void solveMaze(Maze maze, Explorer explorer, Path path) {
+            while (true) {
+                if (isAtExit(maze, explorer)) {
+                    break;
+                }
+
+                if (maze.isPassable(explorer.getRightX(), explorer.getRightY())) {
+                    explorer.turnRight();
+                    path.addStep('R');
+                    explorer.moveForward();
+                    path.addStep('F');
+                } else if (maze.isPassable(explorer.getFrontX(), explorer.getFrontY())) {
+                    explorer.moveForward();
+                    path.addStep('F');
+                } else {
+                    explorer.turnLeft();
+                    path.addStep('L');
+                }
+            }
+        }
+
+        private boolean isAtExit(Maze maze, Explorer explorer) {
+            return explorer.getX() == maze.getWidth() - 2 && explorer.getY() == maze.getHeight() - 2;
+        }
     }
 }
