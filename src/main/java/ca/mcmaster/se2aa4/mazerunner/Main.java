@@ -29,6 +29,7 @@ public class Main {
 
             if (!cmd.hasOption("i")) {
                 logger.error("Missing required option: -i <input_file>");
+                System.err.println("Error: Missing required option '-i <input_file>'");
                 return;
             }
 
@@ -39,7 +40,7 @@ public class Main {
             int exitY = maze.findExit();
 
             logger.info("Maze entry point found at (0, {})", entryY);
-            logger.info("Maze exit point found at ({}, {})\n", maze.getWidth() - 1, exitY);
+            logger.info("Maze exit point found at ({}, {})", maze.getWidth() - 1, exitY);
 
             Explorer solverExplorer = new Explorer(0, entryY, "EAST");
             Path solverPath = new Path();
@@ -56,24 +57,24 @@ public class Main {
                 logger.info("User-supplied path (original): {}", userPathOriginal);
 
                 String expandedUserPath = expandFactorizedPath(userPathOriginal);
-                logger.info("User-supplied path (expanded): {}\n", expandedUserPath);
+                logger.info("User-supplied path (expanded): {}", expandedUserPath);
 
                 if (expandedUserPath.equals(solverRawSteps)) {
-                    logger.info("User path is CORRECT! It matches the solver's raw path.");
+                    System.out.println("User path is CORRECT!");
                 } else {
-                    logger.info("User path is INCORRECT.");
-                    logger.info("Solver's raw path  : {}", solverRawSteps);
-                    logger.info("Solver's factored : {}", solverFactorizedSteps);
+                    System.out.println("User path is INCORRECT!");
+                    System.out.println("Correct factorized path: " + solverFactorizedSteps);
                 }
+
                 logger.info("End of Maze Runner MVP (with user path).");
             } else {
-                logger.info("Solver's raw (unfactored) path: {}", solverRawSteps);
-                logger.info("Solver's factorized path: {}\n", solverFactorizedSteps);
+                System.out.println("Solver's factorized path: " + solverFactorizedSteps);
                 logger.info("End of Maze Runner MVP (no user path).");
             }
 
         } catch (ParseException e) {
             logger.error("Failed to parse command-line arguments: {}", e.getMessage());
+            System.err.println("Error: " + e.getMessage());
         }
     }
 
@@ -92,6 +93,7 @@ public class Main {
                 sb.append(token);
             } else {
                 logger.warn("Ignoring unrecognized token: '{}'. Expected patterns like '2F' or 'FF'.", token);
+                System.err.println("Warning: Unrecognized token: '" + token + "'. Ignoring it.");
             }
         }
         return sb.toString();
@@ -103,6 +105,7 @@ public class Main {
         public Maze(String fileName) {
             if (!loadMaze(fileName)) {
                 logger.error("Maze file could not be loaded. Exiting...");
+                System.err.println("Error: Maze file could not be loaded. Exiting...");
                 System.exit(1);
             }
         }
@@ -129,6 +132,7 @@ public class Main {
                 return true;
             } catch (IOException e) {
                 logger.error("Failed to load maze: {}", e.getMessage());
+                System.err.println("Error: Failed to load maze: " + e.getMessage());
                 return false;
             }
         }
@@ -148,6 +152,7 @@ public class Main {
                 }
             }
             logger.error("No entrance found on the left side of the maze.");
+            System.err.println("Error: No entrance found on the left side of the maze.");
             throw new IllegalStateException("No valid entrance found on the left side of the maze.");
         }
 
@@ -158,17 +163,14 @@ public class Main {
                 }
             }
             logger.error("No exit found on the right side of the maze.");
+            System.err.println("Error: No exit found on the right side of the maze.");
             throw new IllegalStateException("No valid exit found on the right side of the maze.");
         }
 
         public boolean isPassable(int x, int y) {
-            if (y < 0 || y >= grid.length) {
-                return false;
-            }
-            if (x < 0 || x >= grid[y].length) {
-                return false;
-            }
-            return grid[y][x] == ' ';
+            if (y < 0 || y >= grid.length) return false;
+            if (x < 0 || x >= grid[y].length) return false;
+            return (grid[y][x] == ' ');
         }
 
         public int getWidth() {
@@ -190,24 +192,16 @@ public class Main {
             this.direction = startDirection;
         }
 
-        public int getX() {
-            return x;
-        }
-
-        public int getY() {
-            return y;
-        }
-
-        public String getDirection() {
-            return direction;
-        }
+        public int getX() { return x; }
+        public int getY() { return y; }
+        public String getDirection() { return direction; }
 
         public void moveForward() {
             switch (direction) {
                 case "NORTH" -> y--;
                 case "SOUTH" -> y++;
-                case "EAST" -> x++;
-                case "WEST" -> x--;
+                case "EAST"  -> x++;
+                case "WEST"  -> x--;
             }
         }
 
@@ -215,8 +209,8 @@ public class Main {
             switch (direction) {
                 case "NORTH" -> direction = "WEST";
                 case "SOUTH" -> direction = "EAST";
-                case "EAST" -> direction = "NORTH";
-                case "WEST" -> direction = "SOUTH";
+                case "EAST"  -> direction = "NORTH";
+                case "WEST"  -> direction = "SOUTH";
             }
         }
 
@@ -224,8 +218,8 @@ public class Main {
             switch (direction) {
                 case "NORTH" -> direction = "EAST";
                 case "SOUTH" -> direction = "WEST";
-                case "EAST" -> direction = "SOUTH";
-                case "WEST" -> direction = "NORTH";
+                case "EAST"  -> direction = "SOUTH";
+                case "WEST"  -> direction = "NORTH";
             }
         }
 
@@ -233,9 +227,9 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> x + 1;
                 case "SOUTH" -> x - 1;
-                case "EAST" -> x;
-                case "WEST" -> x;
-                default -> x;
+                case "EAST"  -> x;
+                case "WEST"  -> x;
+                default      -> x;
             };
         }
 
@@ -243,9 +237,9 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> y;
                 case "SOUTH" -> y;
-                case "EAST" -> y + 1;
-                case "WEST" -> y - 1;
-                default -> y;
+                case "EAST"  -> y + 1;
+                case "WEST"  -> y - 1;
+                default      -> y;
             };
         }
 
@@ -253,9 +247,9 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> x;
                 case "SOUTH" -> x;
-                case "EAST" -> x + 1;
-                case "WEST" -> x - 1;
-                default -> x;
+                case "EAST"  -> x + 1;
+                case "WEST"  -> x - 1;
+                default      -> x;
             };
         }
 
@@ -263,9 +257,9 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> y - 1;
                 case "SOUTH" -> y + 1;
-                case "EAST" -> y;
-                case "WEST" -> y;
-                default -> y;
+                case "EAST"  -> y;
+                case "WEST"  -> y;
+                default      -> y;
             };
         }
 
@@ -273,9 +267,9 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> x - 1;
                 case "SOUTH" -> x + 1;
-                case "EAST" -> x;
-                case "WEST" -> x;
-                default -> x;
+                case "EAST"  -> x;
+                case "WEST"  -> x;
+                default      -> x;
             };
         }
 
@@ -283,9 +277,9 @@ public class Main {
             return switch (direction) {
                 case "NORTH" -> y;
                 case "SOUTH" -> y;
-                case "EAST" -> y - 1;
-                case "WEST" -> y + 1;
-                default -> y;
+                case "EAST"  -> y - 1;
+                case "WEST"  -> y + 1;
+                default      -> y;
             };
         }
     }
