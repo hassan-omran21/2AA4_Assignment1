@@ -7,7 +7,7 @@ public class PathTest {
 
     @Test
     public void testToRawString() {
-        Main.Path path = new Main.Path();
+        Path path = new Path();
         path.addStep('F');
         path.addStep('R');
         path.addStep('F');
@@ -17,7 +17,7 @@ public class PathTest {
 
     @Test
     public void testFactorizePath() {
-        Main.Path path = new Main.Path();
+        Path path = new Path();
         // Add steps: F, F, F, L, F, F
         path.addStep('F');
         path.addStep('F');

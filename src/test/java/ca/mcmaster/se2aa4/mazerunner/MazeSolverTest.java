@@ -19,47 +19,38 @@ public class MazeSolverTest {
 
     @Test
     public void testSolveMaze() throws IOException {
-        // Create a simple 3x3 maze with entrance and exit on row 1.
-        // Maze:
-        // "###"
-        // "   "
-        // "###"
         String mazeContent = "###\n   \n###";
         File tempFile = createTempMazeFile(mazeContent);
-        Main.Maze maze = new Main.Maze(tempFile.getAbsolutePath());
+        Maze maze = new Maze(tempFile.getAbsolutePath());
         int entrance = maze.findEntrance();
         int exit = maze.findExit();
-        // Both entrance and exit should be at row 1.
         assertEquals(1, entrance);
         assertEquals(1, exit);
 
-        Main.Explorer explorer = new Main.Explorer(0, entrance, "EAST");
-        Main.Path path = new Main.Path();
+        Explorer explorer = new Explorer(0, entrance, "EAST");
+        Path path = new Path();
         path.addStep('F'); // initial step
 
-        Main.MazeSolver solver = new Main.MazeSolver(exit);
+        RightHandSolver solver = new RightHandSolver(exit);
         solver.solveMaze(maze, explorer, path);
 
-        // After solving, explorer's x should be maze.getWidth() - 1.
         assertEquals(maze.getWidth() - 1, explorer.getX());
-        // Explorer's y should equal the exit row.
         assertEquals(exit, explorer.getY());
     }
 
     @Test
     public void testSolverPathNotEmpty() throws IOException {
-        // Use the same simple maze.
         String mazeContent = "###\n   \n###";
         File tempFile = createTempMazeFile(mazeContent);
-        Main.Maze maze = new Main.Maze(tempFile.getAbsolutePath());
+        Maze maze = new Maze(tempFile.getAbsolutePath());
         int entrance = maze.findEntrance();
         int exit = maze.findExit();
 
-        Main.Explorer explorer = new Main.Explorer(0, entrance, "EAST");
-        Main.Path path = new Main.Path();
+        Explorer explorer = new Explorer(0, entrance, "EAST");
+        Path path = new Path();
         path.addStep('F'); // initial step
 
-        Main.MazeSolver solver = new Main.MazeSolver(exit);
+        RightHandSolver solver = new RightHandSolver(exit);
         solver.solveMaze(maze, explorer, path);
 
         String rawPath = path.toRawString();
